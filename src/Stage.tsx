@@ -61,7 +61,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
 
         const longTermRegex = /\[\[([^\]]*)\]\](?!\()/gm;
         const possibleLongTermInstruction = [...newContent.matchAll(longTermRegex)].map(match => match.slice(1)).join('\n').trim();
-        if (newContent.matchAll(longTermRegex).length > 0) {
+        if (longTermRegex.test(newContent)) {
             if (this.longTermLife > 0) {
                 console.log(`Replacing long-term instruction:\n${this.longTermInstruction}\nWith:\n${possibleLongTermInstruction}`);
             } else if (possibleLongTermInstruction.length > 0) {
