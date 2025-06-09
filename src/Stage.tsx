@@ -89,8 +89,8 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         // Image flags:
         currentInstructions.forEach(instruction => {
             if (instruction.startsWith("/imagine")) {
-                console.log(`/imagine detected: ${instruction.split("/imagine")}`);
-                this.imageInstructions.push(instruction.split("/imagine")[1]);
+                console.log(`/imagine detected: ${instruction.split("/imagine")[0]}:${instruction.split("/imagine")[1]}`);
+                this.imageInstructions.push(instruction.split("/imagine")[1].trim());
             }
         });
         currentInstructions = currentInstructions.filter(instruction => !instruction.startsWith("/imagine"));
@@ -140,11 +140,11 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         for (let instruction in this.imageInstructions) {
             console.log(`Generate an image with additional instruction: ${instruction}`);
             const imageDescription = await this.generator.textGen({
-                prompt: `{{description}}\n\n{{messages}}\n\n${instruction.trim().length > 0 ? `Additional image context: ${instruction}\n\n` : ''}` +
+                prompt: `{{description}}\n\n{{messages}}\n\n${instruction.length > 0 ? `Additional image context: ${instruction}\n\n` : ''}` +
                     `Current instruction: Use this response to synthesize a concise visual description of the current narrative moment (with additional image context in mind). ` +
                     `This will be used to generate an image, so it is beneficial to use tags and keywords to convey details. Style keywords should be based on the character description more than the narration.`,
                 min_tokens: 50,
-                max_tokens: 200,
+                max_tokens: 100,
                 include_history: true
             });
             if (imageDescription?.result) {
@@ -154,7 +154,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                     prompt: imageDescription.result
                 });
                 if (imageResponse?.url) {
-                    imageUrls.push(`![${imageDescription.result}](${imageResponse.url}`); 
+                    imageUrls.push(`![${imageDescription.result}](${imageResponse.url})`); 
                 } else {
                     console.log('Failed to generate an image.');
                 }
