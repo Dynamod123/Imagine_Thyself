@@ -140,7 +140,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         for (let instruction of this.imageInstructions) {
             console.log(`Generate an image with additional instruction: ${instruction}`);
             const imageDescription = await this.generator.textGen({
-                prompt: `Information about {{char}}:\n{{personality}}\n\nNarrative History:\n{{messages}}\n\n${instruction.length > 0 ? `Additional Image Context:\n${instruction}\n\n` : ''}` +
+                prompt: `Information about {{char}}:\n{{desc}}\n\nNarrative History:\n{{messages}}\n\n${instruction.length > 0 ? `Important Image Details or Context:\n${instruction}\n\n` : ''}` +
                     `Current instruction:\nUse this response to synthesize a concise visual description of the current narrative moment (with additional image context in mind). ` +
                     `This will be used to generate an image, so it is beneficial to use tags and keywords to convey details. Style keywords should be based on the character description more than the narration.`,
                 min_tokens: 50,
