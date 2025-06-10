@@ -220,7 +220,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         return {
             stageDirections: null,
             messageState: this.writeMessageState(),
-            modifiedMessage: imageUrls.join('\n\n') + (imageUrls.length > 0 ? '\n\n' : '') + newContent,
+            modifiedMessage: newContent + (imageUrls.length > 0 ? '\n' : '') + imageUrls.join('\n\n'),
             error: null,
             systemMessage: null,
             chatState: null
