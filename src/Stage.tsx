@@ -12,6 +12,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
     // Configurable:
     maxLife: number = 10;
     artStyle: string = 'hyperrealistic illustration, dynamic angle, pleasing lighting';
+    aspectRatio: AspectRatio = AspectRatio.WIDESCREEN_HORIZONTAL;
 
     // Per-message state:
     longTermInstruction: string = '';
@@ -37,6 +38,8 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         const {config, messageState} = data;
         this.maxLife = config.maxLife ?? this.maxLife;
         this.artStyle = config.artStyle ?? this.artStyle;
+        console.log(`configuration aspectRatio: ${config.aspectRatio}`);
+        this.aspectRatio = Object.values(AspectRatio).includes(config.aspectRatio as AspectRatio) ? config.aspectRatio as AspectRatio : this.aspectRatio;
 
         this.readMessageState(messageState);
     }
@@ -202,7 +205,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                 console.log(`Received an image description: ${imagePrompt}`);
                 
                 const imageResponse = await this.generator.makeImage({
-                    aspect_ratio: AspectRatio.WIDESCREEN_HORIZONTAL,
+                    aspect_ratio: this.aspectRatio,
                     prompt: imagePrompt
                 });
                 if (imageResponse?.url) {

@@ -96,7 +96,31 @@ config_schema:
       description: "This content will be provided to image generation to describe the style of the images for this chat."
       type: string
       default: "hyperrealistic illustration, dynamic angle, pleasing lighting"
-      
+    aspectRatio:
+      title: "Aspect Ratio"
+      description: "The desired aspect ratio for the generated image."
+      type: string
+      default: "WIDESCREEN_HORIZONTAL"
+      anyOf:
+        - title: "Cinematic Horizontal (21:9)"
+          enum: ["CINEMATIC_HORIZONTAL"]
+        - title: "Widescreen Horizontal (16:9)"
+          enum: ["WIDESCREEN_HORIZONTAL"]
+        - title: "Photo Horizontal (3:2)"
+          enum: ["PHOTO_HORIZONTAL"]
+        - title: "Post Horizontal (5:4)"
+          enum: ["POST_HORIZONTAL"]
+        - title: "SQUARE (1:1)"
+          enum: ["SQUARE"]
+        - title: "Post Vertical (4:5)"
+          enum: ["POST_VERTICAL"]
+        - title: "Photo Vertical (2:3)"
+          enum: ["PHOTO_VERTICAL"]
+        - title: "Widescreen Vertical (9:16)"
+          enum: ["WIDESCREEN_VERTICAL"]
+        - title: "Cinematic Vertical (9:21)"
+          enum: ["CINEMATIC_VERTICAL"]
+
 
 # The schema of the state that you store.
 # This isn't needed even if you do store state,
