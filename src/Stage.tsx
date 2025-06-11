@@ -187,12 +187,12 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                     `System: Composition: (A man sits across from a woman at a busy cafe, table in frame)\nMan: (white, tall, scrawny, short unkempt dark hair, glasses, business casual attire, arched eyebrow)\nWoman: (tanned, short, curvy, long auburn hair, blouse, slacks, cute smile)\n` +
                     `System: Composition: (A man stands, arms crossed, in a modern living room, waist-up portrait)\nMan: (band tee, hint of a smirk, rolling eyes, graying short light-brown hair, brown eyes, pronounced stuble, chiseled jaw)` +
                     `System: Composition: (A woman crosses a busy, futuristic city street)\nWoman: (waving excitedly, short shorts, black crop-top, blue hair in a bob, bright smile, green eyes)\n\n` +
-                    `Narrative History:\n{{messages}}\n\n${instruction.length > 0 ? `Essential Image Context to Convey:\n${instruction}\n\n` : ''}` +
+                    `Narrative History:{{messages}}\n\n${instruction.length > 0 ? `Essential Image Context to Convey:\n${instruction}\n\n` : ''}` +
                     `Current instruction:\nUse this response to synthesize a concise visual description of ${instruction.length > 0 ? `the essential image context` : `of the current narrative moment`}. ` +
-                    `This response will be fed directly into an image generator, so choose tags and keywords that convey great detail about the setting, action, and scene composition, ` +
-                    `presenting ample character appearance notes (gender, skin tone, hair style/color, physique, outfit, etc.).`,
+                    `This response will be fed directly into an image generator, which has no concept of names or what the characters or setting look like; use tags and keywords to convey essential details about the setting, action, and scene composition, ` +
+                    `presenting ample character appearance notes--even if they seem obvious: gender, skin tone, hair style/color, physique, outfit, etc.`,
                 min_tokens: 50,
-                max_tokens: 100,
+                max_tokens: 150,
                 include_history: true
             });
             if (imageDescription?.result) {
@@ -204,7 +204,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                     prompt: imagePrompt
                 });
                 if (imageResponse?.url) {
-                    imageUrls.push(`![${this.sanitizeMarkdownContent(imagePrompt)}](${imageResponse.url})`); 
+                    imageUrls.push(`![An image generated from this prompt: ${this.sanitizeMarkdownContent(imagePrompt)}](${imageResponse.url})`); 
                     if (instruction == this.backgroundImageInstruction) {
                         this.backgroundUrl = imageResponse.url;
                         await this.messenger.updateEnvironment({background: this.backgroundUrl});
