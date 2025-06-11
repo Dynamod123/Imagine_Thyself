@@ -164,13 +164,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
 
     async afterResponse(botMessage: Message): Promise<Partial<StageResponse<ChatStateType, MessageStateType>>> {
 
-        const {
-            anonymizedId,
-            promptForId,
-            content} = botMessage;
-
-        console.log(`anonymizedId: ${anonymizedId}, promptForId: ${promptForId}`);
-        let newContent = content;
+        let newContent = botMessage.content;
 
         // Strip out markdown that it has attempted to mimic.
         newContent = newContent.replace(/!\[.*?\]\(.*?\)/g, '');
