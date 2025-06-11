@@ -95,7 +95,7 @@ config_schema:
       title: "Art Descriptors"
       description: "This content will be provided to image generation to describe the style of the images for this chat."
       type: string
-      default: "hyperrealistic illustration, dynamic angle, pleasing lighting"
+      default: "hyperrealistic illustration, dynamic angle, rich lighting"
     aspectRatio:
       title: "Aspect Ratio"
       description: "The desired aspect ratio for the generated image."

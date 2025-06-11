@@ -22,7 +22,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
     }
     // Configurable:
     maxLife: number = 10;
-    artStyle: string = 'hyperrealistic illustration, dynamic angle, pleasing lighting';
+    artStyle: string = 'hyperrealistic illustration, dynamic angle, rich lighting';
     aspectRatio: AspectRatio = AspectRatio.WIDESCREEN_HORIZONTAL;
 
     // Per-message state:
@@ -204,8 +204,9 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                     `System: Composition: (A man stands, arms crossed, in a modern living room, waist-up portrait)\nMan: (band tee, hint of a smirk, rolling eyes, graying short light-brown hair, brown eyes, pronounced stuble, broad shoulders, narrow waist, chiseled jaw)` +
                     `System: Composition: (A woman crosses a busy, futuristic city street)\nWoman: (waving excitedly, short shorts, black crop-top, blue hair in a bob, bright smile, willowy build, green eyes)\n\n` +
                     `Current instruction:\nUse this response to synthesize a concise visual description of ${instruction.length > 0 ? `the essential image context` : `of the current narrative moment`}. ` +
-                    `This response will be fed directly into an image generator, which has no concept of names or what the characters or setting look like; use tags and keywords to convey essential details about the setting, action, and scene composition, ` +
-                    `presenting ample character appearance notes--even if they seem obvious: gender, skin tone, hair style/color, physique, outfit, etc.`,
+                    `This system response will be fed directly into an image generator, which is unfamiliar with the names or appearance of characters or settings; ` +
+                    `use tags and keywords to convey essential details about the setting, action, and scene composition, ` +
+                    `presenting ample character appearance notes--particularly if they seem obvious: gender, skin tone, hair style/color, physique, outfit, etc.`,
                 min_tokens: 50,
                 max_tokens: 200,
                 include_history: true
