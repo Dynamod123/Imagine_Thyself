@@ -101,7 +101,7 @@ config_schema:
       description: "The desired aspect ratio for the generated image."
       type: string
       default: "Widescreen Horizontal (16:9)"
-      enum: ["Cinematic Horizontal (21:9)", "Widescreen Horizontal (16:9)", "Photo Horizontal (3:2)", "Post Horizontal (5:4)", "SQUARE (1:1)", "Post Vertical (4:5)", "Photo Vertical (2:3)", "Widescreen Vertical (9:16)", "Cinematic Vertical (9:21)"]
+      enum: ["Cinematic Horizontal (21:9)", "Widescreen Horizontal (16:9)", "Photo Horizontal (3:2)", "Post Horizontal (5:4)", "Square (1:1)", "Post Vertical (4:5)", "Photo Vertical (2:3)", "Widescreen Vertical (9:16)", "Cinematic Vertical (9:21)"]
         
 
 

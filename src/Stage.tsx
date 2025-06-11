@@ -14,7 +14,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         "Widescreen Horizontal (16:9)": AspectRatio.WIDESCREEN_HORIZONTAL,
         "Photo Horizontal (3:2)": AspectRatio.PHOTO_HORIZONTAL,
         "Post Horizontal (5:4)": AspectRatio.POST_HORIZONTAL,
-        "SQUARE (1:1)": AspectRatio.SQUARE,
+        "Square (1:1)": AspectRatio.SQUARE,
         "Post Vertical (4:5)": AspectRatio.POST_VERTICAL,
         "Photo Vertical (2:3)": AspectRatio.PHOTO_VERTICAL,
         "Widescreen Vertical (9:16)": AspectRatio.WIDESCREEN_VERTICAL,
