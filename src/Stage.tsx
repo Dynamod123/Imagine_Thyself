@@ -249,9 +249,12 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
             'school girl': 'college girl',
             'schoolboy': 'college guy',
             'school boy': 'college guy',
+            'school': 'college',
             'youngster': 'individual',
             'child': 'individual',
             'kid': 'individual',
+            'teen ': 'individual ',
+            'teenager': 'individual',
             'young ': ' '
         }
         const regex = new RegExp(Object.keys(synonyms).join('|'), 'gi');
