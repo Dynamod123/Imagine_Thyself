@@ -214,7 +214,9 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                     prompt: imagePrompt
                 });
                 if (imageResponse?.url) {
-                    imageUrls.push(`![An image generated from this prompt: ${this.sanitizeMarkdownContent(imagePrompt)}](${imageResponse.url})`); 
+                    imageUrls.push(`![](${imageResponse.url})`);
+                    // If at some point stages can control displayed versus context content, I'd like to shift to including the image prompt:
+                    //imageUrls.push(`![An image generated from this prompt: ${this.sanitizeMarkdownContent(imagePrompt)}](${imageResponse.url})`);
                     if (instruction == this.backgroundImageInstruction) {
                         this.backgroundUrl = imageResponse.url;
                         await this.messenger.updateEnvironment({background: this.backgroundUrl});
