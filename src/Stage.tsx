@@ -236,7 +236,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
     }
 
     async filterValidMarkdown(text: string): Promise<string> {
-        const matches = [...text.matchAll(/!?\[.*?\]\(.*?\)/g)];
+        const matches = [...text.matchAll(/!?\[.*?\]\((.*?)\)/g)];
 
         const validityChecks = await Promise.all(
 
