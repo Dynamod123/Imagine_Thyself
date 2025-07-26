@@ -236,16 +236,16 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
     }
 
     async filterValidMarkdown(text: string): Promise<string> {
-        const matches = [...text.matchAll(/!?\[.*?\]\((.*?)\)/g)];
+        const matches = [...text.matchAll(/(!?)\[(.*?)\]\((.*?)\)/g)];
 
         const validityChecks = await Promise.all(
-            matches.map(match => this.isValidUrl(match[1]))
+            matches.map(match => this.isValidUrl(match[3]))
         );
 
         let cleanedText = text;
         matches.forEach((match, index) => {
             if (!validityChecks[index]) {
-            cleanedText = cleanedText.replace(match[0], '');
+            cleanedText = cleanedText.replace(match[0], match[1] != '!' ? match[2] : '');
             }
         });
 
