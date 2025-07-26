@@ -255,7 +255,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
     async isValidUrl(url: string): Promise<boolean> {
         try {
             const response = await fetch(url, {method: 'HEAD'});
-            console.log(`Validating ${url}: ${response}`);
+            console.log(`Validating ${url}: ${response.ok}`);
             return response.ok;
         } catch {
             return false;
