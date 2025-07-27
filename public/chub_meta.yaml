@@ -9,9 +9,34 @@ tagline: "Take control with []s."
 
 creator_notes: "Want to tell the LLM how to do its job? This stage takes your [bracketed instructions] or [[double-bracketed instructions]] and turns them into \"stage directions,\" 
 which are high-priority instructions that are not directly attributed to the user's input. <br>
-(Please ignore the formatting here and come back later...I'm trying to get this more organized but it's a chore rebuilding it as I make minor adjustments.) <br>
+(Please, please ignore the formatting here and come back later...I'm trying to get this more organized but it's a chore rebuilding it as I make minor adjustments.) <br>
 Simply search for and add this stage to your chat from Chat Settings and you'll be able to leverage multiple features within your input:
 
+<style>
+  .toggle-section input[type=\"checkbox\"] {
+                 display: none;
+}
+                 
+                 .toggle-section label {
+                 display: block;
+                 cursor: pointer;
+                 font-weight: bold;
+                 background: #eef;
+                 padding: 6px;
+                 border-radius: 4px;
+                 margin-bottom: 5px;
+}
+                 
+                 .toggle-section .content {
+                 max-height: 0;
+                 overflow: hidden;
+                 transition: max-height 0.3s ease;
+}
+                 
+                 .toggle-section input[type=\"checkbox\"]:checked ~ .content {
+                 max-height: 200px;
+}
+</style>
 <details>
 <summary>
 [Immediate Instruction]
