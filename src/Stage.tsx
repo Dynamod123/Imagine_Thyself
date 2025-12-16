@@ -111,9 +111,9 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
             console.log(`Auto-Enhance triggered for: ${newContent}`);
 
             try {
-                // Create a promise that rejects after 15 seconds
+                // Create a promise that rejects after 20 seconds
                 const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Enhance request timed out')), 15000)
+                    setTimeout(() => reject(new Error('Enhance request timed out')), 20000)
                 );
 
                 // Use a valid character ID or fallback
