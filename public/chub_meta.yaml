@@ -2,10 +2,10 @@
 #   in which case these values can be managed in the UI.
 
 # The name of the stage.
-project_name: "Boss Mode"
+project_name: "Imagine Thyself"
 
 # A short tagline to show in search.
-tagline: "Take control with [Boss Mode]."
+tagline: "Imagine context-rich prose automatically inserted without commands."
 
 creator_notes: "
 <!-- 💼 Boss Mode Features -->
@@ -76,7 +76,7 @@ which are high-priority instructions that are not directly attributed to the use
 "
 
 # 'PUBLIC', 'PRIVATE', or 'UNLISTED'.
-visibility: 'PUBLIC'
+visibility: 'PRIVATE'
 
 # 'ADJACENT' | 'NONE' | 'COVER' | 'FULLSCREEN'
 # 'ADJACENT' is default. The frame will display on the side of the
@@ -156,5 +156,5 @@ state_schema:
 
 
 
-github_path: 'https://github.com/Dynamod123/Express_Thyself'
+github_path: 'https://github.com/Dynamod123/Imagine_Thyself'
 
