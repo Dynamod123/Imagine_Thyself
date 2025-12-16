@@ -126,12 +126,17 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                 const enhancePromise = this.enhance(characterId, anonymizedId, '', newContent.trim(), stageDirections);
 
                 const result: any = await Promise.race([enhancePromise, timeoutPromise]);
-                // Strip leading bracketed text, conversational fillers, or refusals
+                // Strip leading bracketed text, conversational fillers, or refusals (Loop to catch multiple layers)
                 let textResult = result?.result ?? '';
-                // 1. Strip Chatty/Refusal Preamble (lines starting with...)
-                textResult = textResult.replace(/^(?:\[.*?\]|Understood[\.,!]|Noted[\.,!]|Sure[\.,!]|Okay[\.,!]|Alright[\.,!]|Error\s*-|Terminating response|I cannot comply).*?(\n|$)/is, '');
-                // 2. Strip standard bracketed headers again just in case
-                textResult = textResult.replace(/^\[.*?\]\s*/s, '').trim();
+                let cleaning = true;
+                while (cleaning) {
+                    const original = textResult;
+                    textResult = textResult
+                        .replace(/^\s*\[.*?\]\s*/s, '') // Bracketed blocks [ ... ]
+                        .replace(/^\s*(?:Understood|Noted|Sure|Okay|Alright|Error|Terminating|I cannot|System\s*Alert).*?(\n|$)/is, '') // Conversational/Error lines
+                        .trim();
+                    if (textResult === original) cleaning = false;
+                }
 
                 if (textResult.length > 0) {
                     newContent = textResult;
