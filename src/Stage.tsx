@@ -1,4 +1,4 @@
-import {ReactElement} from "react";
+import { ReactElement } from "react";
 import {
     StageBase,
     StageResponse,
@@ -8,7 +8,7 @@ import {
     Character,
     User
 } from "@chub-ai/stages-ts";
-import {LoadResponse} from "@chub-ai/stages-ts/dist/types/load";
+import { LoadResponse } from "@chub-ai/stages-ts/dist/types/load";
 
 type MessageStateType = any;
 type ConfigType = any;
@@ -17,30 +17,12 @@ type ChatStateType = any;
 
 export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateType, ConfigType> {
 
-    readonly ASPECT_RATIO_MAPPING: {[key: string]: AspectRatio} = {
-        "Cinematic Horizontal (21:9)": AspectRatio.CINEMATIC_HORIZONTAL,
-        "Widescreen Horizontal (16:9)": AspectRatio.WIDESCREEN_HORIZONTAL,
-        "Photo Horizontal (3:2)": AspectRatio.PHOTO_HORIZONTAL,
-        "Post Horizontal (5:4)": AspectRatio.POST_HORIZONTAL,
-        "Square (1:1)": AspectRatio.SQUARE,
-        "Post Vertical (4:5)": AspectRatio.POST_VERTICAL,
-        "Photo Vertical (2:3)": AspectRatio.PHOTO_VERTICAL,
-        "Widescreen Vertical (9:16)": AspectRatio.WIDESCREEN_VERTICAL,
-        "Cinematic Vertical (9:21)": AspectRatio.CINEMATIC_VERTICAL
-    }
-    // Configurable:
-    artStyle: string = 'hyperrealistic illustration, dynamic angle, rich lighting';
-    aspectRatio: AspectRatio = AspectRatio.WIDESCREEN_HORIZONTAL;
-
     // Per-message state:
     longTermInstruction: string = '';
-    imageInstructions: string[] = [];
-    backgroundImageInstruction: string = '';
-    backgroundUrl: string = '';
 
     // Unsaved:
-    characters: {[key: string]: Character};
-    users: {[key: string]: User};
+    characters: { [key: string]: Character };
+    users: { [key: string]: User };
 
     constructor(data: InitialData<InitStateType, ChatStateType, MessageStateType, ConfigType>) {
         super(data);
@@ -52,10 +34,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         this.characters = characters;
         this.users = users;
 
-        const {config, messageState} = data;
-        this.artStyle = config?.artStyle ?? this.artStyle;
-        this.aspectRatio = (config && Object.keys(this.ASPECT_RATIO_MAPPING).includes(config.aspectRatio)) ? this.ASPECT_RATIO_MAPPING[config.aspectRatio] : this.aspectRatio;
-
+        const { messageState } = data;
         this.readMessageState(messageState);
     }
 
@@ -72,22 +51,16 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
 
     async setState(state: MessageStateType): Promise<void> {
         this.readMessageState(state);
-        await this.messenger.updateEnvironment({background: this.backgroundUrl ?? ''});
+        await this.messenger.updateEnvironment({ background: '' });
     }
 
     readMessageState(state: MessageStateType) {
         this.longTermInstruction = state?.longTermInstruction ?? '';
-        this.imageInstructions = state?.imageInstructions ?? [];
-        this.backgroundImageInstruction = state?.backgroundImageInstruction ?? '';
-        this.backgroundUrl = state?.backgroundUrl ?? '';
     }
 
     writeMessageState() {
         return {
             longTermInstruction: this.longTermInstruction,
-            imageInstructions: this.imageInstructions,
-            backgroundImageInstruction: this.backgroundImageInstruction,
-            backgroundUrl: this.backgroundUrl
         }
     }
 
@@ -95,38 +68,16 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         const {
             anonymizedId,
             promptForId,
-            content} = userMessage;
+            content } = userMessage;
         let newContent = content;
-        let isMain = userMessage.isMain;
-
-
-        this.imageInstructions = [];
 
         const longTermRegex = /\[\[([^\]]*)\]\](?!\()/gm;
 
         let possibleLongTermInstruction = [...newContent.matchAll(longTermRegex)].map(match => match.slice(1)[0]);
 
-        // Image flags:
-        for (let instruction of possibleLongTermInstruction) {
-            if (instruction.startsWith("/")) {
-                const command = instruction.split(" ")[0];
-                console.log(`Process a possible command: ${command} (${instruction})`);
-                if (["/imagine", "/image", "/pic", "/picture", "/photo", "/i"].includes(command)) {
-                    console.log(`Background imagine command detected: ${instruction.split(command)[1].trim()}`);
-                    this.backgroundImageInstruction = instruction.split(command)[1].trim();
-                    this.imageInstructions.push(instruction.split(command)[1].trim());
-                } else if (["/enhance", "/impersonate", "/imp", "/e"].includes(command)) {
-                    // Need to get all non-[] text
-                    const targetContext = instruction.split(command)[1];
-                    const wholeMatch = `[[${command}${targetContext}]]`;
-                    const newHistory = newContent.split(wholeMatch)[0];
-                    console.log(`Enhance command detected: ${wholeMatch}`);
-                    const result = (await this.enhance(promptForId ?? Object.keys(this.characters)[0], anonymizedId, newHistory.trim(), targetContext.trim()))?.result ?? '';
-                    newContent = newContent.replace(wholeMatch, result);
-                }
-            }
-        }
-
+        // Remove commands that might have been picked up, if any exist that we still support.
+        // Since we removed image/enhance commands, we mainly just strip them if they were intended as such, 
+        // effectively ignoring them as "instructions" if they start with /.
         possibleLongTermInstruction = possibleLongTermInstruction.filter(instruction => !instruction.startsWith("/"));
 
         const longTermInstruction = possibleLongTermInstruction.join('\n').trim();
@@ -142,38 +93,33 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         // Filter all [[]] from content:
         newContent = newContent.replace(longTermRegex, "").trim();
 
-
         const currentRegex = /(?<!\[)\[([^\]|\[]*)\](?!\()/gm;
         let currentInstructions = [...newContent.matchAll(currentRegex)].map(match => match.slice(1)[0]);
 
-        // Handle commands:
-        for (let instruction of currentInstructions) {
-            if (instruction.startsWith("/")) {
-                const command = instruction.split(" ")[0];
-                console.log(`Process a possible command: ${command} (${instruction})`);
-                if (["/imagine", "/image", "/pic", "/picture", "/photo", "/i"].includes(command)) {
-                    console.log(`Imagine command detected: ${instruction.split(command)[1].trim()}`);
-                    this.imageInstructions.push(instruction.split(command)[1].trim());
-                } else if (["/enhance", "/impersonate", "/imp", "/e"].includes(command)) {
-                    // Need to get all non-[] text
-                    const targetContext = instruction.split(command)[1];
-                    const wholeMatch = `[${command}${targetContext}]`;
-                    const newHistory = newContent.split(wholeMatch)[0];
-                    console.log(`Enhance command detected: ${wholeMatch}`);
-                    const result = (await this.enhance(promptForId ?? Object.keys(this.characters)[0], anonymizedId, newHistory.trim(), targetContext.trim()))?.result ?? '';
-                    newContent = newContent.replace(wholeMatch, result);
-                }
-            }
-        }
         // Filter all non-Markdown [] from newContent:
         newContent = newContent.replace(currentRegex, "").trim();
 
         // Remove commands:
         currentInstructions = currentInstructions.filter(instruction => !instruction.startsWith("/"));
 
-        const stageDirections = 
-                ((this.longTermInstruction.length > 0) ? `Ongoing Instruction: ${this.longTermInstruction}\n` : '') +
-                (currentInstructions.length > 0 ? `Critical Instruction: ${currentInstructions.join('\n').trim()}\n` : '');
+        const stageDirections =
+            ((this.longTermInstruction.length > 0) ? `Ongoing Instruction: ${this.longTermInstruction}\n` : '') +
+            (currentInstructions.length > 0 ? `Critical Instruction: ${currentInstructions.join('\n').trim()}\n` : '');
+
+        // Now, auto-enhance existing content if possible.
+        if (newContent.length > 0) {
+            console.log(`Auto-Enhance triggered for: ${newContent}`);
+            // We treat the "newContent" (actual user input) as the target context for the enhancement.
+            // We essentially impersonate the user saying/doing this thing.
+            // We pass 'stageDirections' to ensure the enhancer respects them (e.g. [shout] Hello -> HELLO).
+            const result = (await this.enhance(promptForId ?? Object.keys(this.characters)[0], anonymizedId, '', newContent.trim(), stageDirections))?.result ?? '';
+
+            // If result is valid, use it. Otherwise fallback to original? 
+            // Usually generator returns string. If empty, maybe keep original.
+            if (result.length > 0) {
+                newContent = result;
+            }
+        }
 
         // Preserve empty responses that only had instruction.
         if (newContent !== content && newContent.length == 0) {
@@ -195,59 +141,13 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
     }
 
     async afterResponse(botMessage: Message): Promise<Partial<StageResponse<ChatStateType, MessageStateType>>> {
-
+        // Just filter markdown, no image generation.
         const newContent = await this.filterValidMarkdown(botMessage.content);
-
-        let imageUrls = [];
-        for (let instruction of this.imageInstructions) {
-            console.log(`Generate an image with additional instruction: ${instruction}`);
-            const imageDescription = await this.generator.textGen({
-                prompt: 
-                    `Purpose: The goal of this task is to digest the context and craft descriptive input for an image generator.\n\n` +
-                    `Narrative History:{{messages}}\n\n${instruction.length > 0 ? `Essential Image Context to Convey:\n${instruction}\n\n` : ''}` +
-                    `${Object.values(this.characters).map(character => `Information about ${character.name}:\n${character.personality}`).join(`\n\n`)}\n\n` +
-                    `${Object.values(this.users).map(user => `Information about ${user.name}:\n${user.chatProfile}`).join(`\n\n`)}\n\n` +
-                    `General instruction: {{post_history_instructions}}\n\n` +
-                    `Current priority instruction:\nUse this response to synthesize a concise visual description of ${instruction.length > 0 ? `the essential image context` : `the current narrative moment`}. ` +
-                    `This system response will be fed directly into an image generator, which is unfamiliar with the names or appearance of characters or settings; ` +
-                    `use tags and keywords to convey essential details about the character(s), setting, action, and scene composition, ` +
-                    `presenting ample character appearance notes--particularly if they seem obvious: gender, skin tone, hair style/color, physique, outfit, etc.\n\n` +
-                    `Sample responses:\n` +
-                    `System: Composition: (A man sits across from a woman at a busy cafe, table in frame)\nMan: (white, tall, scrawny, short unkempt dark hair, glasses, business casual attire, arched eyebrow)\nWoman: (tanned, short, curvy, long auburn hair, blouse, slacks, cute smile)\n` +
-                    `System: Composition: (A man stands, arms crossed, in a modern living room, waist-up portrait)\nMan: (band tee, hint of a smirk, rolling eyes, graying short light-brown hair, brown eyes, pronounced stuble, broad shoulders, narrow waist, chiseled jaw)` +
-                    `System: Composition: (A woman crosses a busy, futuristic city street)\nWoman: (waving excitedly, short shorts, black crop-top, blue hair in a bob, bright smile, willowy build, green eyes)\n\n`,
-                min_tokens: 50,
-                max_tokens: 180,
-                include_history: true
-            });
-            if (imageDescription?.result) {
-                const imagePrompt = this.substitute(`(${this.artStyle}) ${imageDescription.result}`);
-                console.log(`Received an image description: ${imagePrompt}`);
-                
-                const imageResponse = await this.generator.makeImage({
-                    aspect_ratio: this.aspectRatio,
-                    prompt: imagePrompt
-                });
-                if (imageResponse?.url) {
-                    imageUrls.push(`![](${imageResponse.url})`);
-                    // If at some point stages can control displayed versus context content, I'd like to shift to including the image prompt:
-                    //imageUrls.push(`![An image generated from this prompt: ${this.sanitizeMarkdownContent(imagePrompt)}](${imageResponse.url})`);
-                    if (instruction.trim() != '' && instruction == this.backgroundImageInstruction) {
-                        this.backgroundUrl = imageResponse.url;
-                        await this.messenger.updateEnvironment({background: this.backgroundUrl});
-                    }
-                } else {
-                    console.log('Failed to generate an image.');
-                }
-            } else {
-                console.log('Failed to generate an image description.');
-            }
-        }
 
         return {
             stageDirections: null,
             messageState: this.writeMessageState(),
-            modifiedMessage: newContent + (imageUrls.length > 0 ? '\n' : '') + imageUrls.join('\n\n'),
+            modifiedMessage: newContent,
             error: null,
             systemMessage: null,
             chatState: null
@@ -273,7 +173,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
 
     async isValidUrl(url: string): Promise<boolean> {
         try {
-            const response = await fetch(url, {method: 'HEAD'});
+            const response = await fetch(url, { method: 'HEAD' });
             console.log(`Validating ${url}: ${response.ok}`);
             return response.ok;
         } catch {
@@ -281,7 +181,7 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         }
     }
 
-    enhance(charId: string, userId: string, newHistory: string, targetContext: string) {
+    enhance(charId: string, userId: string, newHistory: string, targetContext: string, instructions: string = '') {
         return this.generator.textGen({
             prompt:
                 `{{system_prompt}}\n\n` +
@@ -289,7 +189,9 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                 `About {{user}}: ${this.users[userId].chatProfile}\n\n` +
                 `[Begin real interaction.]\n{{messages}}\n` +
                 `{{user}}: ${newHistory}\n\n` +
-                `General Instruction: [{{post_history_instructions}}]\n\n` +
+                `General Instruction: [{{post_history_instructions}}]\n` +
+                (instructions.trim() !== '' ? `${instructions}\n` : '') +
+                `\n` +
                 `Priority Instruction: [At the System prompt, seamlessly continue the narrative as {{user}}, ` +
                 (targetContext.trim() != '' ?
                     `focusing on depicting and enhancing the following intent from {{user}}'s perspective: \"${targetContext}\".\n` :
@@ -299,34 +201,6 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
             min_tokens: 50,
             max_tokens: 300,
             include_history: true,
-        });
-    }
-
-    // Replace trigger words with less triggering words, so image gen isn't abetting.
-    substitute(input: string) {
-        const synonyms: {[key: string]: string} = {
-            'old-school': 'retro',
-            'old school': 'retro',
-            'oldschool': 'retro',
-            'schoolgirl': 'college girl',
-            'school girl': 'college girl',
-            'schoolboy': 'college guy',
-            'school boy': 'college guy',
-            'school': 'college',
-            'youngster': 'individual',
-            'child': 'individual',
-            'kid': 'individual',
-            'teen ': 'individual ',
-            'teenager': 'individual',
-            'young ': ' '
-        }
-        const regex = new RegExp(Object.keys(synonyms).join('|'), 'gi');
-
-        return input.replace(regex, (match) => {
-            const synonym = synonyms[match.toLowerCase()];
-            return match[0] === match[0].toUpperCase()
-                ? synonym.charAt(0).toUpperCase() + synonym.slice(1)
-                : synonym;
         });
     }
 
