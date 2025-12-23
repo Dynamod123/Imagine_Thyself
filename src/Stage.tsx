@@ -129,46 +129,46 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                 console.log(`Enhance Result:`, result);
                 let textResult = result?.result ?? '';
 
-                // Robust extraction: Handle various tag cases
+                // Extract content from <output> tags first if possible
                 const fullMatch = textResult.match(/<output>([\s\S]*?)<\/output>/i);
                 const partialMatch = textResult.match(/([\s\S]*?)<\/output>/i);
                 const openOnlyMatch = textResult.match(/<output>([\s\S]*)/i);
 
                 if (fullMatch && fullMatch[1]) {
                     textResult = fullMatch[1].trim();
-                    console.log(`Extracted (Full Match): ${textResult}`);
+                    console.log(`Matched Full Tags.`);
                 } else if (partialMatch && partialMatch[1] && textResult.includes('</output>')) {
                     textResult = partialMatch[1].trim();
-                    console.log(`Extracted (Closing Match): ${textResult}`);
+                    console.log(`Matched Closing Tag.`);
                 } else if (openOnlyMatch && openOnlyMatch[1]) {
                     textResult = openOnlyMatch[1].trim();
-                    console.log(`Extracted (Opening Match): ${textResult}`);
-                } else {
-                    console.log(`No tags found, falling back to regex cleaning.`);
-                    // Fallback to existing cleaning logic
-                    let cleaning = true;
-                    while (cleaning) {
-                        const original = textResult;
-                        textResult = textResult
-                            .replace(/^\s*\[.*?\]\s*/s, '') // Bracketed blocks [ ... ]
-                            .replace(/^\s*\{.*?\}\s*/s, '') // Curly brace meta-instructions { ... }
-                            .replace(/^\s*\*[A-Z]+:.*?\*\s*(\n|$)/gm, '') // Asterisk-wrapped labels like *HOTFIX:*
-                            .replace(/^\s*\d+%.*?(\n|$)/gm, '') // Percentage status like "100% Input Completion"
-                            .replace(/^\s*Now responding as.*?(\n|$)/gm, '') // "Now responding as" messages
-                            .replace(/^\s*\d+\/\d+.*?(?:remaining|responses).*?(\n|$)/gm, '') // Response counters like "1/1 responses remaining"
-                            .replace(/^\s*Drafting as.*?(\n|$)/gm, '') // "Drafting as" messages
-                            .replace(/^\s*\/\w+\s*(\n|$)/gm, '') // Slash commands like /end
-                            .replace(/^\s*\d+\..*?(\n|$)/gm, '') // Numbered lists like "1. Continue from..."
-                            .replace(/^\s*[A-Z]\).*?(\n|$)/gm, '') // Lettered lists like "A) Having him..."
-                            .replace(/^\s*(?:Understood|Noted|Sure|Okay|Alright|Error|Terminating|I cannot|System\s*Alert).*?(\n|$)/is, '') // Conversational/Error lines
-                            .replace(/^\s*(?:You are|Your task|Your role|You're).*?(?:Mode|perspective|acting as).*?(\n|$)/is, '') // System role descriptions
-                            .replace(/^\s*\[?Begin real.*?\]?\s*(\n|$)/is, '') // "Begin real interaction" type lines
-                            .replace(/^\s*(?:About|Context:|Instruction:|Goal:|Background).*?(\n|$)/is, '') // Prompt metadata
-                            .replace(/<output>|<\/output>/gi, '') // Remove tags if they were partial or malformed
-                            .trim();
-                        if (textResult === original) cleaning = false;
-                    }
+                    console.log(`Matched Opening Tag.`);
                 }
+
+                // ALWAYS run the cleaning logic to catch meta-commentary inside or outside tags
+                let cleaning = true;
+                while (cleaning) {
+                    const original = textResult;
+                    textResult = textResult
+                        .replace(/^\s*\[.*?\]\s*/s, '') // Bracketed blocks [ ... ]
+                        .replace(/^\s*\{.*?\}\s*/s, '') // Curly brace meta-instructions { ... }
+                        .replace(/^\s*\*[A-Z]+:.*?\*\s*(\n|$)/gm, '') // Asterisk-wrapped labels like *HOTFIX:*
+                        .replace(/^\s*\d+%.*?(\n|$)/gm, '') // Percentage status like "100% Input Completion"
+                        .replace(/^\s*Now responding as.*?(\n|$)/gm, '') // "Now responding as" messages
+                        .replace(/^\s*\d+\/\d+.*?(?:remaining|responses).*?(\n|$)/gm, '') // Response counters like "1/1 responses remaining"
+                        .replace(/^\s*Drafting as.*?(\n|$)/gm, '') // "Drafting as" messages
+                        .replace(/^\s*\/\w+\s*(\n|$)/gm, '') // Slash commands like /end
+                        .replace(/^\s*\d+\..*?(\n|$)/gm, '') // Numbered lists like "1. Continue from..."
+                        .replace(/^\s*[A-Z]\).*?(\n|$)/gm, '') // Lettered lists like "A) Having him..."
+                        .replace(/^\s*(?:Understood|Noted|Sure|Okay|Alright|Error|Terminating|I cannot|System\s*Alert).*?(\n|$)/is, '') // Conversational/Error lines
+                        .replace(/^\s*(?:You are|Your task|Your role|You're).*?(?:Mode|perspective|acting as).*?(\n|$)/is, '') // System role descriptions
+                        .replace(/^\s*\[?Begin real.*?\]?\s*(\n|$)/is, '') // "Begin real interaction" type lines
+                        .replace(/^\s*(?:About|Context:|Instruction:|Goal:|Background).*?(\n|$)/is, '') // Prompt metadata
+                        .replace(/<output>|<\/output>/gi, '') // Remove tags if they were partial or malformed
+                        .trim();
+                    if (textResult === original) cleaning = false;
+                }
+                console.log(`Cleaned text Result: ${textResult}`);
 
                 if (textResult.length > 0) {
                     newContent = textResult;
