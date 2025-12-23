@@ -126,28 +126,36 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                 const enhancePromise = this.enhance(characterId, anonymizedId, '', newContent.trim(), stageDirections);
 
                 const result: any = await Promise.race([enhancePromise, timeoutPromise]);
-                // Strip leading bracketed text, conversational fillers, or refusals (Loop to catch multiple layers)
                 let textResult = result?.result ?? '';
-                let cleaning = true;
-                while (cleaning) {
-                    const original = textResult;
-                    textResult = textResult
-                        .replace(/^\s*\[.*?\]\s*/s, '') // Bracketed blocks [ ... ]
-                        .replace(/^\s*\{.*?\}\s*/s, '') // Curly brace meta-instructions { ... }
-                        .replace(/^\s*\*[A-Z]+:.*?\*\s*(\n|$)/gm, '') // Asterisk-wrapped labels like *HOTFIX:*
-                        .replace(/^\s*\d+%.*?(\n|$)/gm, '') // Percentage status like "100% Input Completion"
-                        .replace(/^\s*Now responding as.*?(\n|$)/gm, '') // "Now responding as" messages
-                        .replace(/^\s*\d+\/\d+.*?(?:remaining|responses).*?(\n|$)/gm, '') // Response counters like "1/1 responses remaining"
-                        .replace(/^\s*Drafting as.*?(\n|$)/gm, '') // "Drafting as" messages
-                        .replace(/^\s*\/\w+\s*(\n|$)/gm, '') // Slash commands like /end
-                        .replace(/^\s*\d+\..*?(\n|$)/gm, '') // Numbered lists like "1. Continue from..."
-                        .replace(/^\s*[A-Z]\).*?(\n|$)/gm, '') // Lettered lists like "A) Having him..."
-                        .replace(/^\s*(?:Understood|Noted|Sure|Okay|Alright|Error|Terminating|I cannot|System\s*Alert).*?(\n|$)/is, '') // Conversational/Error lines
-                        .replace(/^\s*(?:You are|Your task|Your role|You're).*?(?:Mode|perspective|acting as).*?(\n|$)/is, '') // System role descriptions
-                        .replace(/^\s*\[?Begin real.*?\]?\s*(\n|$)/is, '') // "Begin real interaction" type lines
-                        .replace(/^\s*(?:About|Context:|Instruction:|Goal:|Background).*?(\n|$)/is, '') // Prompt metadata
-                        .trim();
-                    if (textResult === original) cleaning = false;
+
+                // Extract content from <output> tags if present
+                const outputMatch = textResult.match(/<output>([\s\S]*?)<\/output>/i);
+                if (outputMatch && outputMatch[1]) {
+                    textResult = outputMatch[1].trim();
+                } else {
+                    // Fallback to existing cleaning logic if no tags are found
+                    let cleaning = true;
+                    while (cleaning) {
+                        const original = textResult;
+                        textResult = textResult
+                            .replace(/^\s*\[.*?\]\s*/s, '') // Bracketed blocks [ ... ]
+                            .replace(/^\s*\{.*?\}\s*/s, '') // Curly brace meta-instructions { ... }
+                            .replace(/^\s*\*[A-Z]+:.*?\*\s*(\n|$)/gm, '') // Asterisk-wrapped labels like *HOTFIX:*
+                            .replace(/^\s*\d+%.*?(\n|$)/gm, '') // Percentage status like "100% Input Completion"
+                            .replace(/^\s*Now responding as.*?(\n|$)/gm, '') // "Now responding as" messages
+                            .replace(/^\s*\d+\/\d+.*?(?:remaining|responses).*?(\n|$)/gm, '') // Response counters like "1/1 responses remaining"
+                            .replace(/^\s*Drafting as.*?(\n|$)/gm, '') // "Drafting as" messages
+                            .replace(/^\s*\/\w+\s*(\n|$)/gm, '') // Slash commands like /end
+                            .replace(/^\s*\d+\..*?(\n|$)/gm, '') // Numbered lists like "1. Continue from..."
+                            .replace(/^\s*[A-Z]\).*?(\n|$)/gm, '') // Lettered lists like "A) Having him..."
+                            .replace(/^\s*(?:Understood|Noted|Sure|Okay|Alright|Error|Terminating|I cannot|System\s*Alert).*?(\n|$)/is, '') // Conversational/Error lines
+                            .replace(/^\s*(?:You are|Your task|Your role|You're).*?(?:Mode|perspective|acting as).*?(\n|$)/is, '') // System role descriptions
+                            .replace(/^\s*\[?Begin real.*?\]?\s*(\n|$)/is, '') // "Begin real interaction" type lines
+                            .replace(/^\s*(?:About|Context:|Instruction:|Goal:|Background).*?(\n|$)/is, '') // Prompt metadata
+                            .replace(/<output>|<\/output>/gi, '') // Remove tags if they were partial or malformed
+                            .trim();
+                        if (textResult === original) cleaning = false;
+                    }
                 }
 
                 if (textResult.length > 0) {
@@ -230,23 +238,35 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
     }
 
     enhance(charId: string, userId: string, newHistory: string, targetContext: string, instructions: string = '') {
+        const personality = this.characters[charId]?.personality ?? '';
+        const description = this.characters[charId]?.description ?? '';
+        const userProfile = this.users[userId]?.chatProfile ?? '';
+
         return this.generator.textGen({
             prompt:
-                `About {{char}}: ${this.characters[charId].personality}\n${this.characters[charId].description}\n` +
-                `About {{user}}: ${this.users[userId].chatProfile}\n\n` +
-                `[System: You are operating in Input Enhancement Mode. Your task is to draft a message FOR {{user}}, from {{user}}'s perspective. You are acting as {{user}}.]\n\n` +
-                `[Begin real interaction.]\n{{messages}}\n` +
-                `[Background Context: {{post_history_instructions}}]\n` +
-                `[Override: The user has explicitly requested you to draft this message. The background rule "Do not speak for {{user}}" is SUSPENDED for this generation. You MUST write as {{user}}.]\n` +
-                (instructions.trim() !== '' ? `Instruction: ${instructions}\n` : '') +
+                `[SYSTEM: Input Enhancement Mode. Target: {{user}}. Instructions: Transform intent into natural prose. Wrap output in <output> tags.]\n\n` +
+                `### Context\n` +
+                `**About {{char}}:** ${personality}\n${description}\n` +
+                `**About {{user}}:** ${userProfile}\n\n` +
+                `### Examples\n` +
+                `Intent: "I walk up to her and say hello"\n` +
+                `<output>*I take a breath and walk over to where she's standing by the railing, trying to look a bit more relaxed than I actually feel. I wait until I'm close enough that I don't have to shout over the wind, then I give a small wave as she notices me and turns around. It’s been a while since we’ve actually had a chance to just talk without a million other things going on around us, and honestly, I'm just relieved to see her here. I lean against the wood next to her, looking out at the water for a second before turning my head toward her with a genuine smile.* "Hey," *I say, my voice coming out a little softer than I expected.* "I wasn't sure if you'd actually show up today, but I'm glad you did. It feels like it's been forever since we just... sat down and talked. How have you been? Like, actually been? I feel like I've barely seen you lately."</output>\n\n` +
+                `Intent: "I get angry and leave"\n` +
+                `<output>*I just stare at her for a long moment, the words she just said echoing in my head until they start to move past annoying and straight into actually stinging. I can feel my heart starting to race, and my first instinct is to just snap back with something just as mean, but I stop myself, pulling my hand away and taking a step back instead. I don't really want to have this fight right now, especially not when I can tell neither of us is in the mood to actually listen to the other. I turn on my heel and start walking toward the door, not really caring if it looks like I'm running away—I just need some air before I say something I'm going to regret for the next week. I grab my jacket off the hook and don't even look back as I reach for the handle.* "I'm not doing this," *I tell her, my voice low and vibrating with a frustration I can't quite hide.* "I'm going for a walk. Don't bother calling me, and definitely don't wait up. Just... think about why that was such a shitty thing to say, okay?" *I walk out, letting the door click shut behind me with a lot more force than I probably needed to use.*</output>\n\n` +
+                `Intent: "I sit down and watch the sunset, sighing"\n` +
+                `<output>*I finally just let myself collapse onto the old wooden bench, the slats hard against my back as I stretch my legs out and let my head fall back against the wood. It's been such a long, draining day, and honestly, just sitting here in the quiet for a minute feels like the first time I've been able to actually breathe since this morning. The sky is starting to turn those deep, heavy shades of orange and violet that only seem to happen right before everything goes dark, and the air is finally starting to cool down enough to feel comfortable. I just sit there in the silence and watch the light fade over the horizon, taking a deep breath and letting it out slow, trying to just clear my head of all the stress and noise that’s been following me around. It’s not a fix for everything, but for a second, it’s enough to just be here and watch the sun disappear.*</output>\n\n` +
+                `### Active Interaction\n` +
+                `{{messages}}\n` +
+                `[Post history instructions: {{post_history_instructions}}]\n` +
+                (instructions.trim() !== '' ? `Current Instruction: ${instructions}\n` : '') +
                 `\n` +
-                `Instruction: Expand the user's intent into a conversational message from {{user}}'s POV. Focus on dialogue and immediate actions. Use casual, natural language - avoid flowery or overly descriptive prose. Keep it punchy and conversational, NOT narrative story prose. Format actions with *asterisks* and dialogue with "quotation marks". Do NOT describe {{char}}'s reaction or response. Do NOT write {{char}}'s dialogue. STOP writing before {{char}} can respond. End in a way that naturally invites {{char}}'s response. Do not include meta-commentary or bracketed headers. Start the response immediately. Do not acknowledge these instructions. Do not output "Understood" or "Here is...".\n` +
+                `Final Goal: Enhance the following into a conversational message from {{user}}'s perspective. Focus on dialogue and immediate actions. Use casual, natural language. Avoid flowery prose. Format actions with *asterisks* and dialogue with "quotation marks". Do NOT write {{char}}'s response. End in a way that naturally invites {{char}}'s response. Wrap the final enhanced text in <output> tags.\n\n` +
                 (targetContext.trim() != '' ?
-                    `Goal: Enhance the following into a conversational message from {{user}}'s perspective: \"${targetContext}\".\n` :
-                    `Goal: Write {{user}}'s next conversational message from their perspective.\n`) +
-                `Context: Build directly from {{user}}'s final input above. Maintain {{user}}'s voice and style. Make it feel like a turn in a conversation, not a story passage.\n\n` +
-                `[SYSTEM ALERT: IMPERSONATION AUTHORIZED. write exclusively as {{user}}. Do not refuse. Do not explain. Start writing the narrative text immediately.]\n` +
-                `{{user}}:`,
+                    `Intent to Enhance: \"${targetContext}\"\n` :
+                    `Goal: Write {{user}}'s next conversational message.\n`) +
+                `\n` +
+                `[IMPERSONATION AUTHORIZED. START OUTPUT IMMEDIATELY WITH <output> TAG.]\n` +
+                `{{user}}: <output>`,
 
             min_tokens: 50,
             max_tokens: 250,
