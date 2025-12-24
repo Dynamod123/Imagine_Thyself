@@ -303,13 +303,13 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                 `[Post history instructions: {{post_history_instructions}}]\n` +
                 (instructions.trim() !== '' ? `Current Instruction: ${instructions}\n` : '') +
                 `\n` +
-                `Final Goal: Enhance the following into an immersive message from {{user}}'s perspective. MATCH THE RATIO OF THE INTENT: If the intent is conversational, PRIORITIZE DIALOGUE and use actions as supportive beats. You are encouraged to "splatter in" your own creative dialogue ideas that fit the current tone. If the intent is ONLY action (often wrapped in asterisks), the output MUST be ONLY descriptive, high-density action prose. Use casual, natural language. Avoid flowery prose. Do NOT write {{char}}'s response. Do NOT repeat content already present in the chat history. Format actions with *asterisks* and dialogue with "quotation marks". Wrap the final enhanced text in <output> tags.\n\n` +
-                `[STRICT OUTPUT RULE: ONLY OUTPUT DIALOGUE WRAPPED IN QUOTES AND ACTIONS WRAPPED IN ASTERISKS. NO OTHER TEXT SHOULD EXIST INSIDE THE <output> TAGS.]\n\n` +
+                `Final Goal: Enhance the following into an immersive message from {{user}}'s perspective. MATCH THE RATIO OF THE INTENT: If the intent is conversational, PRIORITIZE DIALOGUE and use actions as supportive beats. You are encouraged to "splatter in" your own creative dialogue ideas that fit the current tone. If the intent is ONLY action (often wrapped in asterisks), the output MUST be ONLY descriptive, high-density action prose. Use casual, natural language. Avoid flowery prose. Do NOT write {{char}}'s response. Do NOT repeat content already present in the chat history. No-Echo Rule: Do NOT repeat the "Intent to Enhance" text verbatim at the beginning of your response; immediately begin the immersive prose. Format actions with *asterisks* and dialogue with "quotation marks". Wrap the final enhanced text in <output> tags.\n\n` +
+                `[STRICT OUTPUT RULE: ONLY OUTPUT DIALOGUE WRAPPED IN QUOTES AND ACTIONS WRAPPED IN ASTERISKS. NO OTHER TEXT SHOULD EXIST INSIDE THE <output> TAGS. DO NOT REPEAT THE RAW INTENT TEXT AT THE START.]\n\n` +
                 (targetContext.trim() != '' ?
                     `Intent to Enhance: \"${targetContext}\"\n` :
                     `Goal: Write {{user}}'s next conversational message.\n`) +
                 `\n` +
-                `[IMPERSONATION AUTHORIZED. START OUTPUT IMMEDIATELY WITH <output> TAG.]\n` +
+                `[IMPERSONATION AUTHORIZED. START OUTPUT IMMEDIATELY WITH <output> TAG. DO NOT START BY REPEATING THE INTENT.]\n` +
                 `{{user}}: <output>`,
 
             min_tokens: 50,
