@@ -213,7 +213,8 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
         // Add anti-echo stage directions if content was enhanced
         let finalStageDirections = stageDirections;
         if (newContent !== content && newContent.length > 0) {
-            const antiEchoDirective = `[{{char}} should respond naturally to {{user}}'s message. Do not repeat or echo what {{user}} just said. React and respond with {{char}}'s own unique dialogue and actions.]`;
+            const antiEchoDirective = `[{{char}} should respond naturally to {{user}}'s message. Do not repeat or echo what {{user}} just said. React and respond with {{char}}'s own unique dialogue and actions. If {{user}} gives a direct command or asserts dominance, {{char}} must comply with immediate physical action, not verbal stalling—any attitude or resistance should occur during the action, not instead of it.]`;
+
             finalStageDirections = stageDirections.length > 0
                 ? `${stageDirections}${antiEchoDirective}\n`
                 : antiEchoDirective;
