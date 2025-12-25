@@ -126,8 +126,8 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                 const enhancePromise = this.enhance(characterId, anonymizedId, '', newContent.trim(), stageDirections);
 
                 const result: any = await Promise.race([enhancePromise, timeoutPromise]);
-                console.log(`Enhance Result:`, result);
                 let textResult = result?.result ?? '';
+                console.log(`[DIAGNOSTIC] Raw AI Response:\n${textResult}`);
 
                 // Extract content from <output> tags first if possible
                 const fullMatch = textResult.match(/<output>([\s\S]*?)<\/output>/i);
@@ -136,13 +136,15 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
 
                 if (fullMatch && fullMatch[1]) {
                     textResult = fullMatch[1].trim();
-                    console.log(`Matched Full Tags.`);
+                    console.log(`[DIAGNOSTIC] Extraction: Matched Full Tags.`);
                 } else if (partialMatch && partialMatch[1] && textResult.includes('</output>')) {
                     textResult = partialMatch[1].trim();
-                    console.log(`Matched Closing Tag.`);
+                    console.log(`[DIAGNOSTIC] Extraction: Matched Closing Tag.`);
                 } else if (openOnlyMatch && openOnlyMatch[1]) {
                     textResult = openOnlyMatch[1].trim();
-                    console.log(`Matched Opening Tag.`);
+                    console.log(`[DIAGNOSTIC] Extraction: Matched Opening Tag.`);
+                } else {
+                    console.log(`[DIAGNOSTIC] Extraction: No tags found, using raw text.`);
                 }
 
                 // ALWAYS run the cleaning logic to catch meta-commentary inside or outside tags
@@ -170,20 +172,22 @@ export class Stage extends StageBase<InitStateType, ChatStateType, MessageStateT
                 }
 
                 // STRICT PROSE FILTER: Extract ONLY dialogue (in quotes) and actions (in asterisks)
+                console.log(`[DIAGNOSTIC] Pre-Filter Text: ${textResult}`);
                 const proseRegex = /(\*[\s\S]*?\*)|("[\s\S]*?")/g;
                 const matches = [...textResult.matchAll(proseRegex)].map(m => m[0]);
                 if (matches.length > 0) {
                     textResult = matches.join(' ');
-                    console.log(`Strict Prose Filter applied. Final text: ${textResult}`);
+                    console.log(`[DIAGNOSTIC] Prose Filter: SUCCESS (${matches.length} matches found).`);
                 } else {
-                    console.log(`Strict Prose Filter found no matches. Discarding response (likely a refusal or meta-only block).`);
+                    console.log(`[DIAGNOSTIC] Prose Filter: FAILED (No prose matches found). This response will be discarded as it likely contains only refusals or meta-commentary.`);
                     textResult = ''; // Discard the result entirely if it contains no dialogue or actions
                 }
-                console.log(`Cleaned text Result: ${textResult}`);
 
                 if (textResult.length > 0) {
                     newContent = textResult;
-                    console.log(`Enhancement successful.`);
+                    console.log(`[DIAGNOSTIC] Enhancement finalized successfully.`);
+                } else {
+                    console.log(`[DIAGNOSTIC] Enhancement discarded. Falling back to original user intent.`);
                 }
             } catch (error) {
                 console.error(`Auto-Enhance failed or timed out:`, error);
